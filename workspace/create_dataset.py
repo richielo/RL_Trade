@@ -79,8 +79,8 @@ def create_dataset(file_path, split_ratio, period_1, period_2):
 				assert norm_test_set.shape == test_set.shape
 
 				# Save file
-				np.save(DATA_PATH + stock_name + "_train_data.npy", norm_train_set)
-				np.save(DATA_PATH + stock_name + "_test_data.npy", norm_test_set)
+				np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + ".npy", norm_train_set)
+				np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +".npy", norm_test_set)
 	else:
 		# Process individual file
 		# Assume the file in the DATA_PATH directory
@@ -101,8 +101,8 @@ def create_dataset(file_path, split_ratio, period_1, period_2):
 		assert norm_test_set.shape == test_set.shape
 
 		# Save file
-		np.save(DATA_PATH + stock_name + "_train_data.npy", norm_train_set)
-		np.save(DATA_PATH + stock_name + "_test_data.npy", norm_test_set)
+		np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + ".npy", norm_train_set)
+		np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +".npy", norm_test_set)
 
 def main():
 	parser = argparse.ArgumentParser()
