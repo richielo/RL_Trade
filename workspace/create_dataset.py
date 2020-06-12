@@ -38,22 +38,28 @@ def extract_features(file_path, period_1, period_2):
 		ma_list = MA(result_json_list, period_1)
 		ema_list = EMA(result_json_list, period_1)
 		macd_list = MACD(result_json_list, period_1, period_2)
+		sr_list = SR(result_json_list, period_1)
 
 		# Extract market variables
-		o_list, c_list, h_list, l_list, v_list = Market_Variables(result_json_list)
+		o_list, c_list, h_list, l_list, v_list, t_list= Market_Variables(result_json_list)
 
 		# Data size check
-		assert len(roc_list) == len(atr_list) == len(ma_list) == len(ema_list) == len(macd_list) == len(o_list) == len(c_list) == len(h_list) == len(l_list) == len(v_list) #== len(t_list)
+		assert len(roc_list) == len(atr_list) == len(ma_list) == len(ema_list) == len(macd_list) == len(o_list) == len(c_list) == len(h_list) == len(l_list) == len(v_list) == len(t_list)
 
-		features_array = np.array([roc_list, atr_list, ma_list, ema_list, macd_list, o_list, c_list, h_list, l_list, v_list]).T
+		features_array = np.array([roc_list, atr_list, ma_list, ema_list, macd_list, o_list, c_list, h_list, l_list, v_list, sr_list, t_list]).T
 		return features_array
 
 
 def normalize(train_set, test_set):
-	mean_vec = np.mean(train_set, axis = 0)
-	sd_vec = np.std(train_set, axis = 0)
-	norm_train_set = (train_set - mean_vec) / sd_vec
-	norm_test_set = (test_set - mean_vec) / sd_vec
+	# Ignore the last two column which are timestamp and sharpe ratio
+	norm_train_set = train_set.copy()
+	norm_test_set = test_set.copy()
+	mean_vec = np.mean(train_set[:, : -3], axis = 0)
+	mean_mat = np.repeat(np.expand_dims(mean_vec, axis = 0), norm_train_set.shape[0], axis = 0)
+	sd_vec = np.std(train_set[:, : -3], axis = 0)
+	sd_mat = np.repeat(np.expand_dims(sd_vec, axis = 0), norm_train_set.shape[0], axis = 0)
+	norm_train_set[:, : -3] = (train_set[:, : -3] - mean_mat) / sd_mat
+	norm_test_set[:, : -3] = (test_set[:, : -3] - mean_mat[:norm_test_set.shape[0]]) / sd_mat[:norm_test_set.shape[0]]
 	return norm_train_set, norm_test_set
 
 def create_dataset(file_path, split_ratio, period_1, period_2):
@@ -79,8 +85,10 @@ def create_dataset(file_path, split_ratio, period_1, period_2):
 				assert norm_test_set.shape == test_set.shape
 
 				# Save file
-				np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + ".npy", norm_train_set)
-				np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +".npy", norm_test_set)
+				np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_normalized.npy", norm_train_set)
+				np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_raw.npy", train_set)
+				np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +"_normalized.npy", norm_test_set)
+				np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +"_raw.npy", test_set)
 	else:
 		# Process individual file
 		# Assume the file in the DATA_PATH directory
@@ -101,8 +109,10 @@ def create_dataset(file_path, split_ratio, period_1, period_2):
 		assert norm_test_set.shape == test_set.shape
 
 		# Save file
-		np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + ".npy", norm_train_set)
-		np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +".npy", norm_test_set)
+		np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_normalized.npy", norm_train_set)
+		np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_raw.npy", train_set)
+		np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +"_normalized.npy", norm_test_set)
+		np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +"_raw.npy", test_set)
 
 def main():
 	parser = argparse.ArgumentParser()

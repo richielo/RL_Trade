@@ -90,6 +90,27 @@ def ROC(sorted_data, period):
 			roc_list.append(curr_roc)
 	return roc_list
 
+# Sharpe Ratio
+def SR(sorted_data, period, risk_free_rate = 0.007):
+	# 6.5 trading hours per day
+	risk_free_rate = risk_free_rate / (6.5 * 60)
+	sr_list = []
+	for i in range(len(sorted_data)):
+		if (i < period):
+			sr_list.append(0.0)
+		else:
+			expected_return_list = []
+			for j in range(i, i - period, -1):
+				 perc_change = (sorted_data[j]['c'] - sorted_data[j-1]['c']) / sorted_data[j-1]['c']
+				 expected_return_list.append(perc_change)
+			expected_return_list = np.array(expected_return_list)
+			std = np.std(expected_return_list)
+			if(std != 0.0):
+				sr_list.append((np.mean(expected_return_list) - risk_free_rate) / np.std(expected_return_list))
+			else:
+				sr_list.append(0.0)
+	return sr_list
+
 # Extract market variables into lists
 def Market_Variables(sorted_data):
 	o_list = []
@@ -105,4 +126,4 @@ def Market_Variables(sorted_data):
 		l_list.append(sorted_data[i]['l'])
 		v_list.append(sorted_data[i]['v'])
 		t_list.append(sorted_data[i]['t'])
-	return o_list, c_list, h_list, l_list, v_list
+	return o_list, c_list, h_list, l_list, v_list, t_list
