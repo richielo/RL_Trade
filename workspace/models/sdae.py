@@ -11,6 +11,18 @@ class SDAE(nn.Module):
         super(SDAE, self).__init__()
         self.num_layers = 4
 
+        # Paper version
+        # Encoder layers
+        self.enc_fc_1 = nn.Linear(input_dim, 10)
+        self.enc_fc_2 = nn.Linear(10, 16)
+        self.encoder_object = nn.Sequential(*[self.enc_fc_1, nn.ReLU(), self.enc_fc_2])
+        # Decoder layers
+        self.dec_fc_1 = nn.Linear(16, 10)
+        self.dec_fc_2 = nn.Linear(10, input_dim)
+        self.decoder_object = nn.Sequential(*[self.dec_fc_1, nn.ReLU(), self.dec_fc_2])
+
+        """
+        # Old version - misinterpretation of the paper
         # Encoder layers
         self.enc_fc_1 = nn.Linear(input_dim, 128)
         self.enc_fc_2 = nn.Linear(128, 128)
@@ -24,6 +36,7 @@ class SDAE(nn.Module):
         self.dec_fc_3 = nn.Linear(128, 128)
         self.dec_fc_4 = nn.Linear(128, input_dim)
         self.decoder_object = nn.Sequential(*[self.dec_fc_1, nn.ReLU(), self.dec_fc_2, nn.ReLU(), self.dec_fc_3, nn.ReLU(), self.dec_fc_4])
+        """
 
     def forward(self, input, training = True):
         if(training):

@@ -72,6 +72,8 @@ class Single_Stock_Env():
         self.last_action = np.zeros(self.num_actions)
         self.last_action[action] = 1
 
+        #TODO fix state representation, change sharpe ratio to 0.0 if no holdings, also add trading capital as feature
+
         # Returns reward, and next states
         return reward, next_raw_state, next_norm_state
 
