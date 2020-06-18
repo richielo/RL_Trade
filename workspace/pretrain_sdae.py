@@ -16,13 +16,14 @@ MODELS_PATH = "sdae_models/"
 def pretraining(train_path, test_path, lr_index, g_noise_var, pre_num_iter, fine_num_iter):
     stock_name = train_path.split('/')[1].split('_')[0]
     # Load data
-    train_data = np.load(train_path)
-    test_data = np.load(test_path)
+    # Remove timestamp
+    train_data = np.load(train_path)[:, :11]
+    test_data = np.load(test_path)[:, :11]
     train_data = torch.tensor(train_data).float()
     test_data = torch.tensor(test_data).float()
 
     # Initialize model and optimizer
-    sdae_model = SDAE(10)
+    sdae_model = SDAE(11)
     model_optimizer = optim.Adam(sdae_model.parameters(), lr = 10 ** (-1.0 * lr_index))
 
     # Layer wise pretraining
@@ -76,7 +77,7 @@ def main():
     # learning rate index (negative powers of 10)
     parser.add_argument("--lr_index", type = int, default = 4)
     # Gaussian noise variance
-    parser.add_argument("--g_noise_var", type = float, default = 0.01)
+    parser.add_argument("--g_noise_var", type = float, default = 0.001)
     # Layer-wise pretraining - Number of iterations
     parser.add_argument("--pre_num_iter", type = int, default = 6000)
     # Fine-tuning - Number of iterations
