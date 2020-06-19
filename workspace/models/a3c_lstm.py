@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from utils import norm_col_init, weights_init
+from models.utils import norm_col_init, weights_init
 
 class A3C_LSTM(nn.Module):
     def __init__(self, input_dim, num_actions):
+        super(A3C_LSTM, self).__init__()
         self.input_dim = input_dim
         self.num_actions = num_actions
 
