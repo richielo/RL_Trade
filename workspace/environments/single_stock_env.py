@@ -105,5 +105,8 @@ class Single_Stock_Env():
         #return np.concatenate([curr_input_state, np.array([self.curr_capital, sc_ratio])])
         return (curr_input_state, np.array([self.curr_capital, sc_ratio]))
 
+    def calc_total_portfolio_value(self):
+        return self.curr_holdings[0] * self.curr_holdings[1] + self.curr_capital
+
     def reset(self):
         self.init_episode()

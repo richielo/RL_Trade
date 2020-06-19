@@ -41,7 +41,7 @@ class Agent(object):
 			# testing
 			with torch.no_grad():
 				sdae_state = self.sdae_model(env_state, training = False)
-				value, logit, (hx, cx) = self.model((torch.cat((sdae_state, private_state)), (hx, cx)))
+				value, logit, (hx, cx) = self.model((torch.cat((sdae_state, private_state)).unsqueeze(0), (hx, cx)))
 			prob = F.softmax(logit, dim=1)
 			action = prob.max(1)[1].data.cpu().numpy()
 			return action[0], (hx, cx)

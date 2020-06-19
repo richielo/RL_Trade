@@ -9,7 +9,7 @@ from models.a3c_lstm import A3C_LSTM
 from models.sdae import SDAE
 from models.shared_optimizers import SharedRMSprop, SharedAdam
 from a3c_train import train
-#from a3c_test import test
+from a3c_test import test
 
 DATA_PATH = "data/"
 SDAE_PATH = "sdae_models/"
@@ -42,7 +42,7 @@ parser.add_argument(
 parser.add_argument(
     '--workers',
     type=int,
-    default=1,
+    default=2,
     metavar='W',
     help='how many training processes to use (default: 32)')
 parser.add_argument(
@@ -201,10 +201,10 @@ if __name__ == '__main__':
 
     processes = []
 
-    #p = mp.Process(target=test, args=(args, shared_model, env_conf))
-    #p.start()
-    #processes.append(p)
-    #time.sleep(0.1)
+    p = mp.Process(target=test, args=(args, sdae_model, shared_model, test_env_config))
+    p.start()
+    processes.append(p)
+    time.sleep(0.1)
     for rank in range(0, args.workers):
         p = mp.Process(target=train, args=(rank, args, sdae_model, shared_model, optimizer, train_env_config))
         p.start()
