@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 import torch
 import torch.optim as optim
 from environments.single_stock_env import Single_Stock_Env
@@ -6,6 +7,7 @@ from models.utils import ensure_shared_grads
 from models.a3c_lstm import A3C_LSTM
 from a3c_lstm_agent import Agent
 from torch.autograd import Variable
+import matplotlib.pyplot as plt
 
 
 LSTM_SIZE = 128
@@ -35,7 +37,6 @@ def test(args, sdae_model, shared_model, env_config):
 	else:
 		env = Single_Stock_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, full_data_episode = True)
 	state = env.get_current_input_to_model()
-
 	agent_model = A3C_LSTM(args.rl_input_dim, args.num_actions)
 	agent = Agent(sdae_model, agent_model, args)
 	agent.gpu_id = gpu_id
@@ -63,21 +64,50 @@ def test(args, sdae_model, shared_model, env_config):
 
 		episodic_reward = 0.0
 		count = 0
+		actions = []
+		rewards = []
+		pv_list = []
+		pv_change_list = []
 		while env.done is False:
 			action, (next_hx, next_cx) = agent.select_action(state, (hx, cx), training = False)
+			#actions.append(action)
 			reward, next_state, _ = env.step(action)
+			"""
+			rewards.append(reward)
+			pv_list.append(env.calc_total_portfolio_value())
+			if(count == 0):
+				pv_change_list.append(0.0)
+			else:
+				pv_change_list.append(pv_list[count] - pv_list[count - 1])
+			"""
 			episodic_reward += reward
 			state = next_state
 			(hx, cx) = (next_hx, next_cx)
 			count += 1
+		index_list = [i for i in range(1, len(pv_list) + 1)]
+		"""
+		#print(pv_list)
+		print(max(pv_list))
+		print(min(pv_list))
+		print(sum(rewards))
+		fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+		ax1.plot(index_list, pv_list)
+		ax2.plot(index_list, rewards)
+		ax3.plot(index_list, pv_change_list)
+		plt.show()
+		exit()
+		"""
 		# Results logging
 		reward_list.append(episodic_reward)
 		port_value = env.calc_total_portfolio_value()
 		final_equity_list.append(port_value)
-		print("Test reward: " + str(episodic_reward))
-		print("Final equity: " + str(port_value))
 
 		test_num += 1
+		#print("Test num: " + str(test_num) + " | Test reward: " + str(episodic_reward) + " | Final equity: " + str(port_value))
+		#print(env.curr_holdings)
+		print("Test num: {0} | Test reward: {1} | Holdings: {2}/{3} | End Capital: {4} | Final equity : {5}".format(test_num, episodic_reward, env.curr_holdings[0], env.curr_holdings[1], env.curr_capital, port_value))
+		print("\n")
+		sys.stdout.flush()
 		env.reset()
 		state = env.get_current_input_to_model()
 		if gpu_id >= 0:

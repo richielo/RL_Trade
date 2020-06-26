@@ -28,7 +28,7 @@ class Single_Stock_Env():
             self.curr_eps_length = self.stock_raw_data.shape[0]
             self.curr_eps_raw_data = self.stock_raw_data
             self.curr_eps_norm_data = self.stock_norm_data
-        self.curr_state_index = 0
+        self.curr_state_index = 1
         self.curr_raw_state = self.curr_eps_raw_data[self.curr_state_index]
         self.curr_norm_state = self.curr_eps_norm_data[self.curr_state_index]
         self.curr_capital = self.starting_capital
@@ -44,7 +44,7 @@ class Single_Stock_Env():
         if(position_change > 0):
             # Buy action
             cost = self.curr_raw_state[6] * position_change
-            if(self.curr_capital > cost):
+            if(self.curr_capital >= cost):
                 # Buying is performed
                 new_average_price = (self.curr_holdings[0] * self.curr_holdings[1] + cost) / (self.curr_holdings[0] + position_change)
                 self.curr_holdings = [self.curr_holdings[0] + position_change, new_average_price]
@@ -60,19 +60,32 @@ class Single_Stock_Env():
             if(num_curr_holdings >= abs(position_change)):
                 # Selling is performed
                 self.curr_holdings = [self.curr_holdings[0] + position_change, self.curr_holdings[1]]
-                self.curr_capital += self.curr_raw_state[6] + abs(position_change)
+                self.curr_capital += self.curr_raw_state[6] * abs(position_change)
                 position_changed = True
+
+
+        # Reward
+        if(position_changed):
+            reward = (self.curr_raw_state[6] - self.curr_eps_raw_data[self.curr_state_index - 1][6]) * og_position - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
+            #reward = (next_raw_state[6] - self.curr_raw_state[6]) * self.curr_holdings[0] - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
+        else:
+            reward = (self.curr_raw_state[6] - self.curr_eps_raw_data[self.curr_state_index - 1][6]) * og_position
+            #reward = (next_raw_state[6] - self.curr_raw_state[6]) * self.curr_holdings[0]
 
         # Next state
         self.curr_state_index += 1
         next_raw_state = self.curr_eps_raw_data[self.curr_state_index]
         next_norm_state = self.curr_eps_norm_data[self.curr_state_index]
 
-        # Reward
+        """
+        # Reward -- old
         if(position_changed):
             reward = (next_raw_state[6] - self.curr_raw_state[6]) * og_position - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
+            #reward = (next_raw_state[6] - self.curr_raw_state[6]) * self.curr_holdings[0] - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
         else:
             reward = (next_raw_state[6] - self.curr_raw_state[6]) * og_position
+            #reward = (next_raw_state[6] - self.curr_raw_state[6]) * self.curr_holdings[0]
+        """
         # Done flag
         if(self.curr_state_index == self.curr_eps_raw_data.shape[0] - 1):
             self.done = True
@@ -106,7 +119,7 @@ class Single_Stock_Env():
         return (curr_input_state, np.array([self.curr_capital, sc_ratio]))
 
     def calc_total_portfolio_value(self):
-        return self.curr_holdings[0] * self.curr_holdings[1] + self.curr_capital
+        return self.curr_holdings[0] * self.curr_raw_state[6] + self.curr_capital
 
     def reset(self):
         self.init_episode()

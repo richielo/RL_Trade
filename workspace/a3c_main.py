@@ -18,15 +18,15 @@ parser = argparse.ArgumentParser(description='A3C')
 parser.add_argument(
     '--lr',
     type=float,
-    default=0.0001,
+    default=0.00001,
     metavar='LR',
-    help='learning rate (default: 0.0001)')
+    help='learning rate (default: 0.00001)')
 parser.add_argument(
     '--gamma',
     type=float,
-    default=0.99,
+    default=0.999,
     metavar='G',
-    help='discount factor for rewards (default: 0.99)')
+    help='discount factor for rewards (default: 0.999)')
 parser.add_argument(
     '--tau',
     type=float,
@@ -42,25 +42,25 @@ parser.add_argument(
 parser.add_argument(
     '--workers',
     type=int,
-    default=2,
+    default=1,
     metavar='W',
     help='how many training processes to use (default: 32)')
 parser.add_argument(
     '--num_steps',
     type=int,
-    default=10,
+    default=120,
     metavar='NS',
     help='number of forward steps in A3C (default: 20)')
 parser.add_argument(
     '--max_episode_length',
     type=int,
-    default=10000,
+    default=500000,
     metavar='MaxEL',
     help='maximum length of an episode (default: 10000)')
 parser.add_argument(
     '--min_episode_length',
     type=int,
-    default=1000,
+    default=100000,
     metavar='MinPL',
     help='minimum length of an episode (default: 1000)')
 parser.add_argument(
@@ -152,12 +152,12 @@ if __name__ == '__main__':
     else:
         torch.cuda.manual_seed(args.seed)
         mp.set_start_method('spawn')
-
     # Create environment dictionary
     starting_capital = 100000
     trans_cost_rate = 0.0005
     slippage_rate = 0.001
     train_norm_data, train_raw_data, test_norm_data, test_raw_data = load_dataset(args.stock_env, args.period_1, args.period_2)
+
     train_env_config = {}
     test_env_config = {}
     train_env_config['stock_raw_data'] = train_raw_data

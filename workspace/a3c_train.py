@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 import torch
 import torch.optim as optim
 from environments.single_stock_env import Single_Stock_Env
@@ -55,6 +56,7 @@ def train(rank, args, sdae_model, shared_model, optimizer, env_config):
 			hx = hx.cuda()
 			state = state.cuda()
 	eps_num = 0
+	total_steps = 0
 	while True:
 		if gpu_id >= 0:
 			with torch.cuda.device(gpu_id):
@@ -77,27 +79,37 @@ def train(rank, args, sdae_model, shared_model, optimizer, env_config):
 
 		for step in range(args.num_steps):
 			action, val, log_prob, entropy, (next_hx, next_cx) = agent.select_action(state, (hx, cx))
+			#print("Before act")
+			#print(env.curr_holdings)
+			#print(env.curr_capital)
+			#print(state)
+			#reward, next_state, _ = env.step(6 if step == 0 else 1)
 			reward, next_state, _ = env.step(action)
+			#print("After act")
+			#print(env.curr_holdings)
+			#print(env.curr_capital)
+			#print(next_state)
+			#print(reward)
+			#if(step == 1):
+			#	exit()
+			#exit()
 			agent.step(val, log_prob, entropy, reward)
-			if env.done:
-				break
 			state = next_state
 			(hx, cx) = (next_hx, next_cx)
-		env_state, private_state = state
-		env_state = torch.from_numpy(env_state).float()
-		private_state = torch.from_numpy(private_state).float()
-		if gpu_id >= 0:
-			with torch.cuda.device(gpu_id):
-				env_state = env_state.cuda()
-				private_state = private_state.cuda()
-
-		if env.done:
-			eps_num += 1
-			env.reset()
-			state = env.get_current_input_to_model()
+			total_steps += 1
+			if env.done:
+				break
 
 		R = torch.zeros(1, 1).float()
+		# Get values of current state if the episode is not done
 		if not env.done:
+			env_state, private_state = state
+			env_state = torch.from_numpy(env_state).float()
+			private_state = torch.from_numpy(private_state).float()
+			if gpu_id >= 0:
+				with torch.cuda.device(gpu_id):
+					env_state = env_state.cuda()
+					private_state = private_state.cuda()
 			with torch.no_grad():
 				sdae_state = agent.sdae_model(env_state, training = False)
 			value, _, _ = agent.model((Variable(torch.cat((sdae_state, private_state)).unsqueeze(0)), (hx, cx)))
@@ -132,3 +144,10 @@ def train(rank, args, sdae_model, shared_model, optimizer, env_config):
 		ensure_shared_grads(agent.model, shared_model, gpu = gpu_id >= 0)
 		optimizer.step()
 		agent.clear_values()
+
+		if env.done:
+			eps_num += 1
+			print("Training episode: " + str(eps_num) + " | Total steps: " + str(total_steps))
+			sys.stdout.flush()
+			env.reset()
+			state = env.get_current_input_to_model()
