@@ -15,6 +15,8 @@ MODELS_PATH = "sdae_models/"
 
 def pretraining(train_path, test_path, lr_index, g_noise_var, pre_num_iter, fine_num_iter):
     stock_name = train_path.split('/')[1].split('_')[0]
+    p_1 = train_path.aplit('/')[1].split('_')[3].replace('p1', '')
+    p_2 = train_path.aplit('/')[1].split('_')[4].replace('p2', '')
     # Load data
     # Remove timestamp
     train_data = np.load(train_path)[:, :11]
@@ -66,7 +68,7 @@ def pretraining(train_path, test_path, lr_index, g_noise_var, pre_num_iter, fine
                 print("fine-tune iter: " + str(iter) + " loss: " + str(loss))
                 sys.stdout.flush()
 
-    torch.save(sdae_model.state_dict(), MODELS_PATH + stock_name + "_sdae_model_lr" + str(lr_index) + "_g_noise_var" + str(g_noise_var) + "_pre" + str(pre_num_iter) + "fine" + str(fine_num_iter) + ".pt")
+    torch.save(sdae_model.state_dict(), MODELS_PATH + stock_name + "_p1" + str(p_1) + "_p2" + str(p_2) + "_sdae_model_lr" + str(lr_index) + "_g_noise_var" + str(g_noise_var) + "_pre" + str(pre_num_iter) + "fine" + str(fine_num_iter) + ".pt")
 
 def main():
     parser = argparse.ArgumentParser()
