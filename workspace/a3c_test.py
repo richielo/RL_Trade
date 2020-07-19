@@ -135,3 +135,92 @@ def test(args, sdae_model, shared_model, env_config):
 		# Save results
 		np.save(RESULT_DATA_PATH + "epi_reward_" + model_name, np.array(reward_list))
 		np.save(RESULT_DATA_PATH + "portfolio_" + model_name, np.array(final_equity_list))
+
+def test_one_episode(args, sdae_model, shared_model, env_config):
+	# Environment variables
+	stock_raw_data = env_config['stock_raw_data']
+	stock_norm_data = env_config['stock_norm_data']
+	starting_capital = env_config['starting_capital']
+	min_episode_length = env_config['min_episode_length']
+	max_episode_length = env_config['max_episode_length']
+	max_position = env_config['max_position']
+	trans_cost_rate = env_config['trans_cost_rate']
+	slippage_rate = env_config['slippage_rate']
+
+	gpu_id = args.gpu_ids[-1]
+	# Set seed
+	torch.manual_seed(args.seed)
+	if gpu_id >= 0:
+		torch.cuda.manual_seed(args.seed)
+	np.random.seed(args.seed)
+
+	# Initialize environment
+	if(trans_cost_rate is not None and slippage_rate is not None):
+		env = Single_Stock_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate, full_data_episode = True)
+	else:
+		env = Single_Stock_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, full_data_episode = True)
+	state = env.get_current_input_to_model()
+	agent_model = A3C_LSTM(args.rl_input_dim, args.num_actions)
+	agent = Agent(sdae_model, agent_model, args)
+	agent.gpu_id = gpu_id
+
+	cx = Variable(torch.zeros(1, LSTM_SIZE))
+	hx = Variable(torch.zeros(1, LSTM_SIZE))
+
+	if gpu_id >= 0:
+		with torch.cuda.device(gpu_id):
+			agent.model = agent.model.cuda()
+			agent.model.train()
+			cx = cx.cuda()
+			hx = hx.cuda()
+			state = state.cuda()
+
+	if gpu_id >= 0:
+		with torch.cuda.device(gpu_id):
+			agent.model.load_state_dict(shared_model.state_dict())
+	else:
+		agent.model.load_state_dict(shared_model.state_dict())
+
+	episodic_reward = 0.0
+	count = 0
+	actions = []
+	rewards = []
+	pv_list = []
+	pv_change_list = []
+	while env.done is False:
+		action, (next_hx, next_cx) = agent.select_action(state, (hx, cx), training = False)
+		actions.append(action)
+		reward, next_state, _ = env.step(action)
+		rewards.append(reward)
+		"""
+		pv_list.append(env.calc_total_portfolio_value())
+		if(count == 0):
+			pv_change_list.append(0.0)
+		else:
+			pv_change_list.append(pv_list[count] - pv_list[count - 1])
+		"""
+		episodic_reward += reward
+		state = next_state
+		(hx, cx) = (next_hx, next_cx)
+		count += 1
+	index_list = [i for i in range(1, len(pv_list) + 1)]
+	"""
+	#print(pv_list)
+	print(max(pv_list))
+	print(min(pv_list))
+	print(sum(rewards))
+	fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+	ax1.plot(index_list, pv_list)
+	ax2.plot(index_list, rewards)
+	ax3.plot(index_list, pv_change_list)
+	plt.show()
+	exit()
+	"""
+	# Results logging
+	port_value = env.calc_total_portfolio_value()
+	#print("Test num: " + str(test_num) + " | Test reward: " + str(episodic_reward) + " | Final equity: " + str(port_value))
+	#print(env.curr_holdings)
+	print("Test reward: {0} | Holdings: {1}/{2} | End Capital: {3} | Final equity : {4}".format(episodic_reward, env.curr_holdings[0], env.curr_holdings[1], env.curr_capital, port_value))
+	print("\n")
+	sys.stdout.flush()
+	return episodic_reward, rewards, actions

@@ -92,7 +92,6 @@ def train(rank, args, sdae_model, shared_model, optimizer, env_config):
 			#print(reward)
 			#if(step == 1):
 			#	exit()
-			#exit()
 			agent.step(val, log_prob, entropy, reward)
 			state = next_state
 			(hx, cx) = (next_hx, next_cx)

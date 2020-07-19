@@ -9,7 +9,7 @@ from models.a3c_lstm import A3C_LSTM
 from models.sdae import SDAE
 from models.shared_optimizers import SharedRMSprop, SharedAdam
 from a3c_train import train
-from a3c_test import test
+from a3c_test import test_one_episode
 import matplotlib.pyplot as plt
 
 DATA_PATH = "data/"
@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(description='A3C')
 parser.add_argument(
     '--lr',
     type=float,
-    default=0.00000005,
+    default=0.0000001,
     metavar='LR',
     help='learning rate (default: 0.00001)')
 parser.add_argument(
@@ -145,6 +145,35 @@ def load_dataset(stock_env, p1, p2):
     test_raw_data = np.load(DATA_PATH + test_head_name + "_raw.npy")
     return train_norm_data, train_raw_data, test_norm_data, test_raw_data
 
+def get_model_name(args):
+    model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau)
+    return model_name
+
+def find_contiguous_colors(colors):
+    # finds the continuous segments of colors and returns those segments
+    segs = []
+    curr_seg = []
+    prev_color = ''
+    for c in colors:
+        if c == prev_color or prev_color == '':
+            curr_seg.append(c)
+        else:
+            segs.append(curr_seg)
+            curr_seg = []
+            curr_seg.append(c)
+        prev_color = c
+    segs.append(curr_seg) # the final one
+    return segs
+
+def plot_multicolored_lines(x,y,colors):
+    segments = find_contiguous_colors(colors)
+    plt.figure()
+    start= 0
+    for seg in segments:
+        end = start + len(seg)
+        l, = plt.gca().plot(x[start:end],y[start:end],lw=2,c=seg[0])
+        start = end
+
 if __name__ == '__main__':
     args = parser.parse_args()
     torch.manual_seed(args.seed)
@@ -158,18 +187,6 @@ if __name__ == '__main__':
     trans_cost_rate = 0.0005
     slippage_rate = 0.001
     train_norm_data, train_raw_data, test_norm_data, test_raw_data = load_dataset(args.stock_env, args.period_1, args.period_2)
-
-    """
-    # Test plot of price
-    test_indices = []
-    test_prices = []
-    for i in range(test_norm_data.shape[0]):
-        test_indices.append(i)
-        test_prices.append(test_norm_data[i, 6])
-    plt.plot(test_indices, test_prices)
-    plt.show()
-    exit()
-    """
 
     train_env_config = {}
     test_env_config = {}
@@ -197,32 +214,38 @@ if __name__ == '__main__':
     sdae_model.load_state_dict(sdae_saved_state)
 
     # Initiate shared model
-    shared_model = A3C_LSTM(args.rl_input_dim, args.num_actions)
-    if args.load:
-        saved_state = torch.load('{0}.pt'.format(args.load_model_path), map_location=lambda storage, loc: storage)
-        shared_model.load_state_dict(saved_state)
-    shared_model.share_memory()
+    trained_model = A3C_LSTM(args.rl_input_dim, args.num_actions)
+    model_name = get_model_name(args)
+    #saved_state = torch.load('{0}{1}.pt'.format(args.load_model_path, model_name), map_location=lambda storage, loc: storage)
+    saved_state = torch.load('{0}{1}.pt.dat'.format(args.load_model_path, model_name), map_location=lambda storage, loc: storage)
+    trained_model.load_state_dict(saved_state)
+    trained_model.share_memory()
 
-    if args.shared_optimizer:
-        if args.optimizer == 'RMSprop':
-            optimizer = SharedRMSprop(shared_model.parameters(), lr=args.lr)
-        if args.optimizer == 'Adam':
-            optimizer = SharedAdam(shared_model.parameters(), lr=args.lr, amsgrad=args.amsgrad)
-        optimizer.share_memory()
-    else:
-        optimizer = None
+    # Run one testing episode
+    episodic_reward, rewards, actions = test_one_episode(args, sdae_model, trained_model, test_env_config)
+    colors = []
+    red_count = 0
+    blue_count = 0
+    green_count = 0
+    for a in actions:
+        if(a < 0):
+            colors.append('red')
+            red_count += 1
+        elif(a == 0):
+            colors.append('blue')
+            blue_count += 1
+        else:
+            colors.append('green')
+            green_count += 1
 
-    processes = []
+    #print("red: " + str(red_count) + " green: " + str(green_count) + " blue: " + str(blue_count))
+    #exit()
 
-    p = mp.Process(target=test, args=(args, sdae_model, shared_model, test_env_config))
-    p.start()
-    processes.append(p)
-    time.sleep(0.1)
-    for rank in range(0, args.workers):
-        p = mp.Process(target=train, args=(rank, args, sdae_model, shared_model, optimizer, train_env_config))
-        p.start()
-        processes.append(p)
-        time.sleep(0.1)
-    for p in processes:
-        time.sleep(0.1)
-        p.join()
+    # Plotting, change buy and sell actions to green and red
+    test_indices = []
+    test_prices = []
+    for i in range(test_raw_data.shape[0]):
+        test_indices.append(i)
+        test_prices.append(test_raw_data[i, 6])
+    plot_multicolored_lines(test_indices[1:-1], test_prices[1:-1], colors)
+    plt.show()
