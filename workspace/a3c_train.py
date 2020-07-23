@@ -96,6 +96,12 @@ def train(rank, args, sdae_model, shared_model, optimizer, env_config):
 			state = next_state
 			(hx, cx) = (next_hx, next_cx)
 			total_steps += 1
+
+			if((total_steps % 500000) == 0):
+				print("Rank: " + str(rank) + " | Training episode: " + str(eps_num) + " | Total steps: " + str(total_steps))
+				sys.stdout.flush()
+			if(total_steps >= args.num_train_steps):
+				break
 			if env.done:
 				break
 
@@ -146,7 +152,8 @@ def train(rank, args, sdae_model, shared_model, optimizer, env_config):
 
 		if env.done:
 			eps_num += 1
-			print("Training episode: " + str(eps_num) + " | Total steps: " + str(total_steps))
-			sys.stdout.flush()
 			env.reset()
 			state = env.get_current_input_to_model()
+
+		if(total_steps >= args.num_train_steps):
+			break

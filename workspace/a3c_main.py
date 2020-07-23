@@ -47,9 +47,15 @@ parser.add_argument(
     metavar='W',
     help='how many training processes to use (default: 32)')
 parser.add_argument(
+    '--num_train_steps',
+    type=int,
+    default=25000000,
+    metavar='NTS',
+    help='Number of training steps per working (default: 25000000)')
+parser.add_argument(
     '--num_steps',
     type=int,
-    default=240,
+    default=20,
     metavar='NS',
     help='number of forward steps in A3C (default: 20)')
 parser.add_argument(
@@ -72,13 +78,13 @@ parser.add_argument(
 parser.add_argument(
     '--period_1',
     type=int,
-    default=10,
+    default=30,
     metavar='p1',
     help='main averaging period length of features')
 parser.add_argument(
     '--period_2',
     type=int,
-    default=25,
+    default=60,
     metavar='p2',
     help='secondary averaging period length of features for MACD')
 parser.add_argument(
@@ -191,7 +197,8 @@ if __name__ == '__main__':
     test_env_config['max_position'] = (args.num_actions - 1) / 2
 
     # Initiate and Load sdae models (TODO: add argument to specify file name)
-    sdae_model_name = "AAL_sdae_model_lr4_g_noise_var0.001_pre100000fine500000.pt"
+    #sdae_model_name = "AAL_sdae_model_lr4_g_noise_var0.001_pre100000fine500000.pt"
+    sdae_model_name = "AAPL_p130_p260_sdae_model_lr5_g_noise_var1e-08_pre100000fine1000000.pt"
     sdae_model = SDAE(args.input_dim)
     sdae_saved_state = torch.load(SDAE_PATH + sdae_model_name, map_location=lambda storage, loc: storage)
     sdae_model.load_state_dict(sdae_saved_state)
