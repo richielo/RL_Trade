@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import numpy as np
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -220,16 +221,24 @@ if __name__ == '__main__':
         optimizer = None
 
     processes = []
-
-    p = mp.Process(target=test, args=(args, sdae_model, shared_model, test_env_config))
+    # (pid, flag)
+    train_process_finish_flags = torch.zeros(args.workers)
+    train_process_finish_flags.share_memory_()
+    p = mp.Process(target=test, args=(args, sdae_model, shared_model, test_env_config, train_process_finish_flags))
     p.start()
     processes.append(p)
     time.sleep(0.1)
     for rank in range(0, args.workers):
-        p = mp.Process(target=train, args=(rank, args, sdae_model, shared_model, optimizer, train_env_config))
+        p = mp.Process(target=train, args=(rank, args, sdae_model, shared_model, optimizer, train_env_config, train_process_finish_flags))
         p.start()
         processes.append(p)
         time.sleep(0.1)
+
     for p in processes:
         time.sleep(0.1)
         p.join()
+        """
+        if(p.is_alive()):
+            print("Process id:" + str(p.pid) + " | Still alive!")
+            sys.stdout.flush()
+        """

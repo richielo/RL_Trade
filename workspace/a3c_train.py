@@ -10,7 +10,7 @@ from torch.autograd import Variable
 
 LSTM_SIZE = 128
 
-def train(rank, args, sdae_model, shared_model, optimizer, env_config):
+def train(rank, args, sdae_model, shared_model, optimizer, env_config, train_process_finish_flags):
 	# Environment variables
 	stock_raw_data = env_config['stock_raw_data']
 	stock_norm_data = env_config['stock_norm_data']
@@ -156,4 +156,7 @@ def train(rank, args, sdae_model, shared_model, optimizer, env_config):
 			state = env.get_current_input_to_model()
 
 		if(total_steps >= args.num_train_steps):
+			train_process_finish_flags[rank] = 1
+			print("Train worker " + str(rank) + " done")
+			sys.stdout.flush()
 			break
