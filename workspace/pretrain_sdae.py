@@ -15,8 +15,8 @@ MODELS_PATH = "sdae_models/"
 
 def pretraining(train_path, test_path, lr_index, g_noise_var, pre_num_iter, fine_num_iter):
     stock_name = train_path.split('/')[1].split('_')[0]
-    p_1 = train_path.aplit('/')[1].split('_')[3].replace('p1', '')
-    p_2 = train_path.aplit('/')[1].split('_')[4].replace('p2', '')
+    p_1 = train_path.split('/')[1].split('_')[3].replace('p1', '')
+    p_2 = train_path.split('/')[1].split('_')[4].replace('p2', '')
     # Load data
     # Remove timestamp
     train_data = np.load(train_path)[:, :11]
