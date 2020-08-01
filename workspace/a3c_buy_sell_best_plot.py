@@ -186,6 +186,7 @@ if __name__ == '__main__':
     starting_capital = 100000
     trans_cost_rate = 0.0005
     slippage_rate = 0.001
+    max_position_per_act = 3
     train_norm_data, train_raw_data, test_norm_data, test_raw_data = load_dataset(args.stock_env, args.period_1, args.period_2)
 
     train_env_config = {}
@@ -223,6 +224,7 @@ if __name__ == '__main__':
 
     # Run one testing episode
     episodic_reward, rewards, actions = test_one_episode(args, sdae_model, trained_model, test_env_config)
+    actions = [a - max_position_per_act for a in actions]
     colors = []
     red_count = 0
     blue_count = 0
