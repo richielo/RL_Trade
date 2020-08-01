@@ -33,7 +33,7 @@ class Single_Stock_Env():
         self.curr_norm_state = self.curr_eps_norm_data[self.curr_state_index]
         self.curr_capital = self.starting_capital
         self.last_action = np.zeros(self.num_actions)
-        # Volume, Average Bought Price
+        # Volume, Average Bought Price - latter kind of useless
         self.curr_holdings = [0.0, 0.0]
         self.done = False
 
@@ -112,7 +112,7 @@ class Single_Stock_Env():
             curr_input_state[-1] = 0.0
 
         # Append trading capital and stock/cash ratio
-        sc_ratio = (self.curr_holdings[0] * self.curr_holdings[1]) / self.curr_capital
+        sc_ratio = (self.curr_holdings[0] * self.curr_raw_state[6]) / self.curr_capital
 
         #TODO: change it to tensor to avoid conversion
         #return np.concatenate([curr_input_state, np.array([self.curr_capital, sc_ratio])])
