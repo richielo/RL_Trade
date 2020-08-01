@@ -122,9 +122,15 @@ def test(args, sdae_model, shared_model, env_config, train_process_finish_flags)
 			cx = Variable(torch.zeros(1, LSTM_SIZE))
 
 		# Save model
-		model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_best.pt"
+		if(args.use_filter_data):
+			model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_best_filtered.pt"
+		else:
+			model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_best.pt"
 		if(terminate_next_iter):
-			model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_final.pt"
+			if(args.use_filter_data):
+				model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_final_filtered.pt"
+			else:
+				model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_final.pt"
 			if gpu_id >= 0:
 				with torch.cuda.device(gpu_id):
 					state_to_save = agent.model.state_dict()
@@ -136,8 +142,7 @@ def test(args, sdae_model, shared_model, env_config, train_process_finish_flags)
 			break
 		else:
 			if(episodic_reward > max_reward):
-				max_reward = episodic_reward
-				model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_best.pt"
+				#model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_best.pt"
 				if gpu_id >= 0:
 					with torch.cuda.device(gpu_id):
 						state_to_save = agent.model.state_dict()
@@ -147,9 +152,13 @@ def test(args, sdae_model, shared_model, env_config, train_process_finish_flags)
 					torch.save(state_to_save, '{0}{1}.dat'.format(args.save_model_dir, model_name))
 
 		# Save results
-		np.save(RESULT_DATA_PATH + "epi_reward_" + model_name, np.array(reward_list))
-		np.save(RESULT_DATA_PATH + "portfolio_" + model_name, np.array(final_equity_list))
-		
+		if(args.use_filter_data):
+			np.save(RESULT_DATA_PATH + "epi_reward_filtered_" + model_name, np.array(reward_list))
+			np.save(RESULT_DATA_PATH + "portfolio_filtered_" + model_name, np.array(final_equity_list))
+		else:
+			np.save(RESULT_DATA_PATH + "epi_reward_" + model_name, np.array(reward_list))
+			np.save(RESULT_DATA_PATH + "portfolio_" + model_name, np.array(final_equity_list))
+
 		if(torch.all(train_process_finish_flags == torch.ones(train_process_finish_flags.size(0)))):
 			terminate_next_iter = True
 			print("From test process: all training process terminated")

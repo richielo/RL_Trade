@@ -62,13 +62,13 @@ parser.add_argument(
 parser.add_argument(
     '--max_episode_length',
     type=int,
-    default=500000,
+    default=100000,
     metavar='MaxEL',
     help='maximum length of an episode (default: 10000)')
 parser.add_argument(
     '--min_episode_length',
     type=int,
-    default=100000,
+    default=10000,
     metavar='MinPL',
     help='minimum length of an episode (default: 1000)')
 parser.add_argument(
@@ -141,15 +141,28 @@ parser.add_argument(
     type=int,
     default=7,
     help='number of actions')
+parser.add_argument(
+    '--use_filter_data',
+    default=True,
+    metavar='AM',
+    help='Whether to use filtered data')
 
 
-def load_dataset(stock_env, p1, p2):
+def load_dataset(stock_env, p1, p2, use_filter_data):
     train_head_name = stock_env + "_train_data" + "_p1" + str(p1) + "_p2" + str(p2)
-    train_norm_data = np.load(DATA_PATH + train_head_name + "_normalized.npy")
-    train_raw_data = np.load(DATA_PATH + train_head_name + "_raw.npy")
+    if(use_filter_data):
+        train_norm_data = np.load(DATA_PATH + train_head_name + "_normalized_filtered.npy")
+        train_raw_data = np.load(DATA_PATH + train_head_name + "_raw_filtered.npy")
+    else:
+        train_norm_data = np.load(DATA_PATH + train_head_name + "_normalized.npy")
+        train_raw_data = np.load(DATA_PATH + train_head_name + "_raw.npy")
     test_head_name = stock_env + "_test_data" + "_p1" + str(p1) + "_p2" + str(p2)
-    test_norm_data = np.load(DATA_PATH + test_head_name + "_normalized.npy")
-    test_raw_data = np.load(DATA_PATH + test_head_name + "_raw.npy")
+    if(use_filter_data):
+        test_norm_data = np.load(DATA_PATH + test_head_name + "_normalized_filtered.npy")
+        test_raw_data = np.load(DATA_PATH + test_head_name + "_raw_filtered.npy")
+    else:
+        test_norm_data = np.load(DATA_PATH + test_head_name + "_normalized.npy")
+        test_raw_data = np.load(DATA_PATH + test_head_name + "_raw.npy")
     return train_norm_data, train_raw_data, test_norm_data, test_raw_data
 
 if __name__ == '__main__':
@@ -164,7 +177,7 @@ if __name__ == '__main__':
     starting_capital = 100000
     trans_cost_rate = 0.0005
     slippage_rate = 0.001
-    train_norm_data, train_raw_data, test_norm_data, test_raw_data = load_dataset(args.stock_env, args.period_1, args.period_2)
+    train_norm_data, train_raw_data, test_norm_data, test_raw_data = load_dataset(args.stock_env, args.period_1, args.period_2, args.use_filter_data)
 
     """
     # Test plot of price
@@ -199,7 +212,8 @@ if __name__ == '__main__':
 
     # Initiate and Load sdae models (TODO: add argument to specify file name)
     #sdae_model_name = "AAL_sdae_model_lr4_g_noise_var0.001_pre100000fine500000.pt"
-    sdae_model_name = "AAPL_p130_p260_sdae_model_lr5_g_noise_var1e-08_pre100000fine1000000.pt"
+    #sdae_model_name = "AAPL_p130_p260_sdae_model_lr5_g_noise_var1e-08_pre100000fine1000000.pt"
+    sdae_model_name = "AAPL_p110_p225_sdae_model_lr5_g_noise_var1e-09_pre100000fine1000000.pt"
     sdae_model = SDAE(args.input_dim)
     sdae_saved_state = torch.load(SDAE_PATH + sdae_model_name, map_location=lambda storage, loc: storage)
     sdae_model.load_state_dict(sdae_saved_state)

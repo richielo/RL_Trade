@@ -13,7 +13,7 @@ EVAL_FREQ = 1000
 BATCH_SIZE = 256
 MODELS_PATH = "sdae_models/"
 
-def pretraining(train_path, test_path, lr_index, g_noise_var, pre_num_iter, fine_num_iter):
+def pretraining(train_path, test_path, lr_index, g_noise_var, pre_num_iter, fine_num_iter, use_filter_data):
     stock_name = train_path.split('/')[1].split('_')[0]
     p_1 = train_path.split('/')[1].split('_')[3].replace('p1', '')
     p_2 = train_path.split('/')[1].split('_')[4].replace('p2', '')
@@ -68,7 +68,10 @@ def pretraining(train_path, test_path, lr_index, g_noise_var, pre_num_iter, fine
                 print("fine-tune iter: " + str(iter) + " loss: " + str(loss))
                 sys.stdout.flush()
 
-    torch.save(sdae_model.state_dict(), MODELS_PATH + stock_name + "_p1" + str(p_1) + "_p2" + str(p_2) + "_sdae_model_lr" + str(lr_index) + "_g_noise_var" + str(g_noise_var) + "_pre" + str(pre_num_iter) + "fine" + str(fine_num_iter) + ".pt")
+    if(use_filter_data):
+        torch.save(sdae_model.state_dict(), MODELS_PATH + stock_name + "_p1" + str(p_1) + "_p2" + str(p_2) + "_sdae_model_lr" + str(lr_index) + "_g_noise_var" + str(g_noise_var) + "_pre" + str(pre_num_iter) + "fine" + str(fine_num_iter) + "_filtered.pt")
+    else:
+        torch.save(sdae_model.state_dict(), MODELS_PATH + stock_name + "_p1" + str(p_1) + "_p2" + str(p_2) + "_sdae_model_lr" + str(lr_index) + "_g_noise_var" + str(g_noise_var) + "_pre" + str(pre_num_iter) + "fine" + str(fine_num_iter) + ".pt")
 
 def main():
     parser = argparse.ArgumentParser()
@@ -84,9 +87,11 @@ def main():
     parser.add_argument("--pre_num_iter", type = int, default = 6000)
     # Fine-tuning - Number of iterations
     parser.add_argument("--fine_num_iter", type = int, default = 12000)
+    # Use filter data or not
+    parser.add_argument('--use_filter_data', default=True, metavar='AM', help='Whether to use filtered data')
     args = parser.parse_args()
 
-    pretraining(args.train_path, args.test_path, args.lr_index, args.g_noise_var, args.pre_num_iter, args.fine_num_iter)
+    pretraining(args.train_path, args.test_path, args.lr_index, args.g_noise_var, args.pre_num_iter, args.fine_num_iter, args.use_filter_data)
 
 if __name__ == '__main__':
 	main()

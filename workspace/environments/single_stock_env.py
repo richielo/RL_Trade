@@ -66,10 +66,16 @@ class Single_Stock_Env():
 
         # Reward
         if(position_changed):
+            # Reward using raw state
             reward = (self.curr_raw_state[6] - self.curr_eps_raw_data[self.curr_state_index - 1][6]) * og_position - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
+            # Reward using norm state
+            #reward = (self.curr_norm_state[6] - self.curr_eps_norm_data[self.curr_state_index - 1][6]) * og_position - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
             #reward = (next_raw_state[6] - self.curr_raw_state[6]) * self.curr_holdings[0] - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
         else:
+            # Reward using raw state
             reward = (self.curr_raw_state[6] - self.curr_eps_raw_data[self.curr_state_index - 1][6]) * og_position
+            # Reward using norm state
+            #reward = (self.curr_norm_state[6] - self.curr_eps_norm_data[self.curr_state_index - 1][6]) * og_position
             #reward = (next_raw_state[6] - self.curr_raw_state[6]) * self.curr_holdings[0]
 
         # Next state
