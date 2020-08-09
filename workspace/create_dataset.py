@@ -14,14 +14,18 @@ from utils.timezone_utils import *
 DATA_PATH = "data/"
 FILE_EXT = ".json"
 
-def filter_data_by_time(sorted_data):
+def filter_data_by_time(sorted_data, filter_by_year):
 	removal_indices = []
 	for i in range(len(sorted_data)):
 		ts = int(sorted_data[i]['t']) / 1000
 		utc_datetime = datetime.utcfromtimestamp(ts)
 		nyc_datetime = utc_datetime.replace(tzinfo=timezone.utc).astimezone(Eastern)
+
 		# 0930-1130 and 1300-1500
-		if(nyc_datetime.hour >= 9 and nyc_datetime.hour < 12):
+		# year < filter_by_year remove
+		if(nyc_datetime.year < filter_by_year):
+			removal_indices.append(i)
+		elif(nyc_datetime.hour >= 9 and nyc_datetime.hour < 12):
 			if(nyc_datetime.hour == 9 and nyc_datetime.minute <= 30):
 				removal_indices.append(i)
 			elif(nyc_datetime.hour == 11 and nyc_datetime.minute > 30):
@@ -43,7 +47,7 @@ def extract_timestamp(item):
 	except KeyError:
 		return 0
 
-def extract_features(file_path, period_1, period_2, filter_by_time):
+def extract_features(file_path, period_1, period_2, filter_by_time, filter_by_year):
 	with open(file_path) as data_file:
 		data = json.load(data_file)
 		result_json_list = data['results']
@@ -59,7 +63,7 @@ def extract_features(file_path, period_1, period_2, filter_by_time):
 
 		# filter out data based on time
 		if(filter_by_time):
-			result_json_list = filter_data_by_time(result_json_list)
+			result_json_list = filter_data_by_time(result_json_list, filter_by_year)
 
 		# Compute technical indicators
 		roc_list = ROC(result_json_list, period_1)
@@ -91,7 +95,7 @@ def normalize(train_set, test_set):
 	norm_test_set[:, : -3] = (test_set[:, : -3] - mean_mat[:norm_test_set.shape[0]]) / sd_mat[:norm_test_set.shape[0]]
 	return norm_train_set, norm_test_set
 
-def create_dataset(file_path, split_ratio, period_1, period_2, filter_by_time):
+def create_dataset(file_path, split_ratio, period_1, period_2, filter_by_time, filter_by_year):
 	if(file_path is None):
 		# Go through the entire directory
 		for file in os.listdir(DATA_PATH):
@@ -99,7 +103,7 @@ def create_dataset(file_path, split_ratio, period_1, period_2, filter_by_time):
 				stock_name = file.split('_')[1]
 				file_path = os.path.join(DATA_PATH, file)
 				# Extract features
-				features_array = extract_features(file_path, period_1, period_2, filter_by_time)
+				features_array = extract_features(file_path, period_1, period_2, filter_by_time, filter_by_year)
 
 				# Train/Test split
 				train_size = int(features_array.shape[0] * split_ratio)
@@ -115,10 +119,10 @@ def create_dataset(file_path, split_ratio, period_1, period_2, filter_by_time):
 
 				# Save file
 				if(filter_by_time):
-					np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_normalized_filtered.npy", norm_train_set)
-					np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_raw_filtered.npy", train_set)
-					np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +"_normalized_filtered.npy", norm_test_set)
-					np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +"_raw_filtered.npy", test_set)
+					np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_normalized_filtered_fyear" + str(filter_by_year) + "npy", norm_train_set)
+					np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_raw_filtered_fyear" + str(filter_by_year) + "npy", train_set)
+					np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +"_normalized_filtered_fyear" + str(filter_by_year) + "npy", norm_test_set)
+					np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +"_raw_filtered_fyear" + str(filter_by_year) + "npy", test_set)
 				else:
 					np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_normalized.npy", norm_train_set)
 					np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_raw.npy", train_set)
@@ -129,7 +133,7 @@ def create_dataset(file_path, split_ratio, period_1, period_2, filter_by_time):
 		# Assume the file in the DATA_PATH directory
 		stock_name = file_path.split('/')[1].split('_')[1]
 		# Extract features
-		features_array = extract_features(file_path, period_1, period_2, filter_by_time)
+		features_array = extract_features(file_path, period_1, period_2, filter_by_time, filter_by_year)
 
 		# Train/Test split
 		train_size = int(features_array.shape[0] * split_ratio)
@@ -147,10 +151,10 @@ def create_dataset(file_path, split_ratio, period_1, period_2, filter_by_time):
 
 		# Save file
 		if(filter_by_time):
-			np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_normalized_filtered.npy", norm_train_set)
-			np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_raw_filtered.npy", train_set)
-			np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +"_normalized_filtered.npy", norm_test_set)
-			np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +"_raw_filtered.npy", test_set)
+			np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_normalized_filtered_fyear" + str(filter_by_year) + ".npy", norm_train_set)
+			np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_raw_filtered_fyear" + str(filter_by_year) + ".npy", train_set)
+			np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +"_normalized_filtered_fyear" + str(filter_by_year) + ".npy", norm_test_set)
+			np.save(DATA_PATH + stock_name + "_test_data" + "_p1" + str(period_1) + "_p2" + str(period_2) +"_raw_filtered_fyear" + str(filter_by_year) + ".npy", test_set)
 		else:
 			np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_normalized.npy", norm_train_set)
 			np.save(DATA_PATH + stock_name + "_train_data" + "_p1" + str(period_1) + "_p2" + str(period_2) + "_raw.npy", train_set)
@@ -168,10 +172,12 @@ def main():
 	# For MACD
 	parser.add_argument("--period_2", type = int, default = 25)
 	# Whether to filter data by time according to paper - only keep 0930-1130 and 1300-1500
-	parser.add_argument('--filter_by_time', default=False, metavar='L', help='whether to filter data by time')
+	parser.add_argument('--filter_by_time', default=False, help='whether to filter data by time')
+	# Filter any data before this year
+	parser.add_argument('--filter_by_year', type = int, default=2000, help='The oldest year to include')
 	args = parser.parse_args()
 
-	create_dataset(args.file_path, args.split_ratio, args.period_1, args.period_2, args.filter_by_time)
+	create_dataset(args.file_path, args.split_ratio, args.period_1, args.period_2, args.filter_by_time, args.filter_by_year)
 
 if __name__ == '__main__':
 	main()

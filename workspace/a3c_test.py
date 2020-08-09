@@ -123,12 +123,12 @@ def test(args, sdae_model, shared_model, env_config, train_process_finish_flags)
 
 		# Save model
 		if(args.use_filter_data):
-			model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_best_filtered.pt"
+			model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_best_filtered_fyear" + str(args.filter_by_year) +  ".pt"
 		else:
 			model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_best.pt"
 		if(terminate_next_iter):
 			if(args.use_filter_data):
-				model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_final_filtered.pt"
+				model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_final_filtered_fyear" + str(args.filter_by_year) +  ".pt"
 			else:
 				model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_final.pt"
 			if gpu_id >= 0:

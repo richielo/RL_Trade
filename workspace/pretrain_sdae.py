@@ -13,7 +13,7 @@ EVAL_FREQ = 1000
 BATCH_SIZE = 256
 MODELS_PATH = "sdae_models/"
 
-def pretraining(train_path, test_path, lr_index, g_noise_var, pre_num_iter, fine_num_iter, use_filter_data):
+def pretraining(train_path, test_path, lr_index, g_noise_var, pre_num_iter, fine_num_iter, use_filter_data, filter_by_year):
     stock_name = train_path.split('/')[1].split('_')[0]
     p_1 = train_path.split('/')[1].split('_')[3].replace('p1', '')
     p_2 = train_path.split('/')[1].split('_')[4].replace('p2', '')
@@ -69,7 +69,7 @@ def pretraining(train_path, test_path, lr_index, g_noise_var, pre_num_iter, fine
                 sys.stdout.flush()
 
     if(use_filter_data):
-        torch.save(sdae_model.state_dict(), MODELS_PATH + stock_name + "_p1" + str(p_1) + "_p2" + str(p_2) + "_sdae_model_lr" + str(lr_index) + "_g_noise_var" + str(g_noise_var) + "_pre" + str(pre_num_iter) + "fine" + str(fine_num_iter) + "_filtered.pt")
+        torch.save(sdae_model.state_dict(), MODELS_PATH + stock_name + "_p1" + str(p_1) + "_p2" + str(p_2) + "_sdae_model_lr" + str(lr_index) + "_g_noise_var" + str(g_noise_var) + "_pre" + str(pre_num_iter) + "fine" + str(fine_num_iter) + "_filtered_fyear" + str(filter_by_year) + ".pt")
     else:
         torch.save(sdae_model.state_dict(), MODELS_PATH + stock_name + "_p1" + str(p_1) + "_p2" + str(p_2) + "_sdae_model_lr" + str(lr_index) + "_g_noise_var" + str(g_noise_var) + "_pre" + str(pre_num_iter) + "fine" + str(fine_num_iter) + ".pt")
 
@@ -84,14 +84,16 @@ def main():
     # Gaussian noise variance
     parser.add_argument("--g_noise_var", type = float, default = 0.001)
     # Layer-wise pretraining - Number of iterations
-    parser.add_argument("--pre_num_iter", type = int, default = 6000)
+    parser.add_argument("--pre_num_iter", type = int, default = 100000)
     # Fine-tuning - Number of iterations
-    parser.add_argument("--fine_num_iter", type = int, default = 12000)
+    parser.add_argument("--fine_num_iter", type = int, default = 1000000)
     # Use filter data or not
-    parser.add_argument('--use_filter_data', default=True, metavar='AM', help='Whether to use filtered data')
+    parser.add_argument('--use_filter_data', default=True, help='Whether to use filtered data')
+    # Filter by year
+    parser.add_argument('--filter_by_year', type = int, default=2000, help='The oldest year to include')
     args = parser.parse_args()
 
-    pretraining(args.train_path, args.test_path, args.lr_index, args.g_noise_var, args.pre_num_iter, args.fine_num_iter, args.use_filter_data)
+    pretraining(args.train_path, args.test_path, args.lr_index, args.g_noise_var, args.pre_num_iter, args.fine_num_iter, args.use_filter_data, args.filter_by_year)
 
 if __name__ == '__main__':
 	main()
