@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 
-class Single_Stock_BS_Env():
+class Single_Stock_Base_Env():
     """
     This environment only has the option of buy and sell instead of dealing with positions directly
     E.g. +3 = buy 3 shares, 0 = no buy or sell action, -3 = sell 3 shares
@@ -42,6 +42,41 @@ class Single_Stock_BS_Env():
         self.done = False
 
     def step(self, action):
+        raise NotImplementedError
+
+    def get_current_input_to_model(self):
+        # Return current normalized state for the agent to use
+
+        # Remove timestamp
+        curr_input_state = self.curr_norm_state[:11]
+
+        # Check holdings to update sharp ratio. If holdings is 0, set zero
+        if(self.curr_holdings[0] == 0):
+            curr_input_state[-1] = 0.0
+
+        # Append trading capital and stock/cash ratio
+        sc_ratio = (self.curr_holdings[0] * self.curr_raw_state[6]) / self.curr_capital
+
+        #TODO: change it to tensor to avoid conversion
+        #return np.concatenate([curr_input_state, np.array([self.curr_capital, sc_ratio])])
+        return (curr_input_state, np.array([self.curr_capital, sc_ratio]))
+
+    def calc_total_portfolio_value(self):
+        return self.curr_holdings[0] * self.curr_raw_state[6] + self.curr_capital
+
+    def reset(self):
+        self.init_episode()
+
+
+class Single_Stock_BS_Env(Single_Stock_Base_Env):
+    """
+    This environment only has the option of buy and sell instead of dealing with positions directly
+    E.g. +3 = buy 3 shares, 0 = no buy or sell action, -3 = sell 3 shares
+    """
+    def __init__(self, stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate = 0.0005, slippage_rate = 0.001, full_data_episode = False):
+        Single_Stock_Base_Env.__init__(self, stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate, full_data_episode)
+
+    def step(self, action):
         og_position = float(self.curr_holdings[0])
         position_change = float(action) - self.max_position
         position_changed = False
@@ -71,15 +106,15 @@ class Single_Stock_BS_Env():
         # Reward
         if(position_changed):
             # Reward using raw state
-            #reward = (self.curr_raw_state[6] - self.curr_eps_raw_data[self.curr_state_index - 1][6]) * og_position - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
+            reward = (self.curr_raw_state[6] - self.curr_eps_raw_data[self.curr_state_index - 1][6]) * og_position - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
             # Reward using norm state
-            reward = (self.curr_norm_state[6] - self.curr_eps_norm_data[self.curr_state_index - 1][6]) * og_position - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
+            #reward = (self.curr_norm_state[6] - self.curr_eps_norm_data[self.curr_state_index - 1][6]) * og_position - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
             #reward = (next_raw_state[6] - self.curr_raw_state[6]) * self.curr_holdings[0] - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
         else:
             # Reward using raw state
-            #reward = (self.curr_raw_state[6] - self.curr_eps_raw_data[self.curr_state_index - 1][6]) * og_position
+            reward = (self.curr_raw_state[6] - self.curr_eps_raw_data[self.curr_state_index - 1][6]) * og_position
             # Reward using norm state
-            reward = (self.curr_norm_state[6] - self.curr_eps_norm_data[self.curr_state_index - 1][6]) * og_position
+            #reward = (self.curr_norm_state[6] - self.curr_eps_norm_data[self.curr_state_index - 1][6]) * og_position
             #reward = (next_raw_state[6] - self.curr_raw_state[6]) * self.curr_holdings[0]
 
         # Next state
@@ -111,25 +146,13 @@ class Single_Stock_BS_Env():
         # Returns reward, and next states
         return reward, self.get_current_input_to_model(), self.done
 
-    def get_current_input_to_model(self):
-        # Return current normalized state for the agent to use
 
-        # Remove timestamp
-        curr_input_state = self.curr_norm_state[:11]
+class Single_Stock_Full_Env(Single_Stock_Base_Env):
+    """
+    This environment has the option of buy, sell, short and cover, same as the paper
+    """
+    def __init__(self, stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate = 0.0005, slippage_rate = 0.001, full_data_episode = False):
+        Single_Stock_Base_Env.__init__(self, stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate, full_data_episode)
 
-        # Check holdings to update sharp ratio. If holdings is 0, set zero
-        if(self.curr_holdings[0] == 0):
-            curr_input_state[-1] = 0.0
-
-        # Append trading capital and stock/cash ratio
-        sc_ratio = (self.curr_holdings[0] * self.curr_raw_state[6]) / self.curr_capital
-
-        #TODO: change it to tensor to avoid conversion
-        #return np.concatenate([curr_input_state, np.array([self.curr_capital, sc_ratio])])
-        return (curr_input_state, np.array([self.curr_capital, sc_ratio]))
-
-    def calc_total_portfolio_value(self):
-        return self.curr_holdings[0] * self.curr_raw_state[6] + self.curr_capital
-
-    def reset(self):
-        self.init_episode()
+    def step(self, action):
+        pass

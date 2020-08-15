@@ -33,9 +33,9 @@ def test(args, sdae_model, shared_model, env_config, train_process_finish_flags)
 
 	# Initialize environment
 	if(trans_cost_rate is not None and slippage_rate is not None):
-		env = Single_Stock_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate, full_data_episode = True)
+		env = Single_Stock_BS_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate, full_data_episode = True)
 	else:
-		env = Single_Stock_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, full_data_episode = True)
+		env = Single_Stock_BS_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, full_data_episode = True)
 	state = env.get_current_input_to_model()
 	agent_model = A3C_LSTM(args.rl_input_dim, args.num_actions)
 	agent = Agent(sdae_model, agent_model, args)
