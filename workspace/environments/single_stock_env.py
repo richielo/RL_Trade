@@ -2,7 +2,11 @@ import os
 import sys
 import numpy as np
 
-class Single_Stock_Env():
+class Single_Stock_BS_Env():
+    """
+    This environment only has the option of buy and sell instead of dealing with positions directly
+    E.g. +3 = buy 3 shares, 0 = no buy or sell action, -3 = sell 3 shares
+    """
     def __init__(self, stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate = 0.0005, slippage_rate = 0.001, full_data_episode = False):
         self.stock_raw_data = stock_raw_data
         self.stock_mean_vec = np.mean(stock_raw_data[:, : -3], axis = 0)
@@ -48,7 +52,7 @@ class Single_Stock_Env():
                 # Buying is performed
                 new_average_price = (self.curr_holdings[0] * self.curr_holdings[1] + cost) / (self.curr_holdings[0] + position_change)
                 self.curr_holdings = [self.curr_holdings[0] + position_change, new_average_price]
-                self.curr_capital -= cost
+                self.curr_capital -= (cost + (self.trans_cost_rate + self.slippage_rate) * abs(position_change))
                 position_changed = True
 
         elif(position_change == 0):
@@ -60,22 +64,22 @@ class Single_Stock_Env():
             if(num_curr_holdings >= abs(position_change)):
                 # Selling is performed
                 self.curr_holdings = [self.curr_holdings[0] + position_change, self.curr_holdings[1]]
-                self.curr_capital += self.curr_raw_state[6] * abs(position_change)
+                self.curr_capital += self.curr_raw_state[6] * abs(position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
                 position_changed = True
 
 
         # Reward
         if(position_changed):
             # Reward using raw state
-            reward = (self.curr_raw_state[6] - self.curr_eps_raw_data[self.curr_state_index - 1][6]) * og_position - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
+            #reward = (self.curr_raw_state[6] - self.curr_eps_raw_data[self.curr_state_index - 1][6]) * og_position - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
             # Reward using norm state
-            #reward = (self.curr_norm_state[6] - self.curr_eps_norm_data[self.curr_state_index - 1][6]) * og_position - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
+            reward = (self.curr_norm_state[6] - self.curr_eps_norm_data[self.curr_state_index - 1][6]) * og_position - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
             #reward = (next_raw_state[6] - self.curr_raw_state[6]) * self.curr_holdings[0] - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
         else:
             # Reward using raw state
-            reward = (self.curr_raw_state[6] - self.curr_eps_raw_data[self.curr_state_index - 1][6]) * og_position
+            #reward = (self.curr_raw_state[6] - self.curr_eps_raw_data[self.curr_state_index - 1][6]) * og_position
             # Reward using norm state
-            #reward = (self.curr_norm_state[6] - self.curr_eps_norm_data[self.curr_state_index - 1][6]) * og_position
+            reward = (self.curr_norm_state[6] - self.curr_eps_norm_data[self.curr_state_index - 1][6]) * og_position
             #reward = (next_raw_state[6] - self.curr_raw_state[6]) * self.curr_holdings[0]
 
         # Next state

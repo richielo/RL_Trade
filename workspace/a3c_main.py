@@ -50,13 +50,13 @@ parser.add_argument(
 parser.add_argument(
     '--num_train_steps',
     type=int,
-    default=25000000,
+    default=5000000,
     metavar='NTS',
     help='Number of training steps per working (default: 25000000)')
 parser.add_argument(
     '--num_steps',
     type=int,
-    default=20,
+    default=10,
     metavar='NS',
     help='number of forward steps in A3C (default: 20)')
 parser.add_argument(
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     starting_capital = 100000
     trans_cost_rate = 0.0005
     slippage_rate = 0.001
-    train_norm_data, train_raw_data, test_norm_data, test_raw_data = load_dataset(args.stock_env, args.period_1, args.period_2, args.use_filter_data, args.filter_by_year)
+    _, train_norm_data, train_raw_data, test_norm_data, test_raw_data = load_dataset(args.stock_env, args.period_1, args.period_2, args.use_filter_data, args.filter_by_year)
 
     """
     # Test plot of price
@@ -202,6 +202,7 @@ if __name__ == '__main__':
     # Initiate and Load sdae models (TODO: add argument to specify file name)
     #sdae_model_name = "AAL_sdae_model_lr4_g_noise_var0.001_pre100000fine500000.pt"
     sdae_model_name = "AAPL_p130_p260_sdae_model_lr5_g_noise_var1e-09_pre100000fine1000000_filtered_fyear2008.pt"
+    #sdae_model_name = "AAPL_p110_p225_sdae_model_lr5_g_noise_var1e-09_pre100000fine1000000_filtered_fyear2008.pt"
     #sdae_model_name = "AAPL_p110_p225_sdae_model_lr5_g_noise_var1e-09_pre100000fine1000000.pt"
     sdae_model = SDAE(args.input_dim)
     sdae_saved_state = torch.load(SDAE_PATH + sdae_model_name, map_location=lambda storage, loc: storage)

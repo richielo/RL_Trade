@@ -20,4 +20,4 @@ def load_dataset(stock_env, p1, p2, use_filter_data, filter_by_year):
     else:
         test_norm_data = np.load(DATA_PATH + test_head_name + "_normalized.npy")
         test_raw_data = np.load(DATA_PATH + test_head_name + "_raw.npy")
-    return train_norm_data, train_raw_data, test_norm_data, test_raw_data
+    return (train_head_name, test_head_name),  train_norm_data, train_raw_data, test_norm_data, test_raw_data

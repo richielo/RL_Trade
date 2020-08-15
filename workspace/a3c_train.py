@@ -2,7 +2,7 @@ import numpy as np
 import sys
 import torch
 import torch.optim as optim
-from environments.single_stock_env import Single_Stock_Env
+from environments.single_stock_env import Single_Stock_BS_Env
 from models.utils import ensure_shared_grads
 from models.a3c_lstm import A3C_LSTM
 from a3c_lstm_agent import Agent
@@ -30,9 +30,9 @@ def train(rank, args, sdae_model, shared_model, optimizer, env_config, train_pro
 
 	# Initialize environment
 	if(trans_cost_rate is not None and slippage_rate is not None):
-		env = Single_Stock_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate)
+		env = Single_Stock_BS_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate)
 	else:
-		env = Single_Stock_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position)
+		env = Single_Stock_BS_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position)
 	state = env.get_current_input_to_model()
 
 	# Initialize optimizers
@@ -145,7 +145,8 @@ def train(rank, args, sdae_model, shared_model, optimizer, env_config, train_pro
 			policy_loss = policy_loss - agent.log_probs[i] * Variable(gae) - 0.01 * agent.entropies[i]
 
 		agent.model.zero_grad()
-		(policy_loss + 0.5 * value_loss).backward()
+		#(policy_loss + 0.5 * value_loss).backward()
+		(policy_loss + value_loss).backward()
 		ensure_shared_grads(agent.model, shared_model, gpu = gpu_id >= 0)
 		optimizer.step()
 		agent.clear_values()
