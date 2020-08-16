@@ -2,7 +2,7 @@ import numpy as np
 import sys
 import torch
 import torch.optim as optim
-from environments.single_stock_env import Single_Stock_BS_Env
+from environments.single_stock_env import Single_Stock_BS_Env, Single_Stock_Full_Env
 from models.utils import ensure_shared_grads
 from models.a3c_lstm import A3C_LSTM
 from a3c_lstm_agent import Agent
@@ -33,9 +33,15 @@ def test(args, sdae_model, shared_model, env_config, train_process_finish_flags)
 
 	# Initialize environment
 	if(trans_cost_rate is not None and slippage_rate is not None):
-		env = Single_Stock_BS_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate, full_data_episode = True)
+		if(args.full_env):
+		env = Single_Stock_Full_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate, full_data_episode = True)
+		else:
+			env = Single_Stock_BS_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate, full_data_episode = True)
 	else:
-		env = Single_Stock_BS_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, full_data_episode = True)
+		if(args.full_env):
+			env = Single_Stock_Full_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, full_data_episode = True)
+		else:
+			env = Single_Stock_BS_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, full_data_episode = True)
 	state = env.get_current_input_to_model()
 	agent_model = A3C_LSTM(args.rl_input_dim, args.num_actions)
 	agent = Agent(sdae_model, agent_model, args)
@@ -107,7 +113,7 @@ def test(args, sdae_model, shared_model, env_config, train_process_finish_flags)
 		test_num += 1
 		#print("Test num: " + str(test_num) + " | Test reward: " + str(episodic_reward) + " | Final equity: " + str(port_value))
 		#print(env.curr_holdings)
-		print("Test num: {0} | Test reward: {1} | Holdings: {2}/{3} | End Capital: {4} | Final equity : {5}".format(test_num, episodic_reward, env.curr_holdings[0], env.curr_holdings[1], env.curr_capital, port_value))
+		print("Test num: {0} | Test reward: {1} | Holdings: {2} | End Capital: {3} | Final equity : {4}".format(test_num, episodic_reward, env.curr_holdings[0], env.curr_capital, port_value))
 		print("\n")
 		sys.stdout.flush()
 		env.reset()
@@ -123,14 +129,14 @@ def test(args, sdae_model, shared_model, env_config, train_process_finish_flags)
 
 		# Save model
 		if(args.use_filter_data):
-			model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_best_filtered_fyear" + str(args.filter_by_year) +  ".pt"
+			model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_best_filtered_fyear" + str(args.filter_by_year) + "_full" if args.full_env else "" +  ".pt"
 		else:
-			model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_best.pt"
+			model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_full" if args.full_env else "" + "_best.pt"
 		if(terminate_next_iter):
 			if(args.use_filter_data):
-				model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_final_filtered_fyear" + str(args.filter_by_year) +  ".pt"
+				model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_final_filtered_fyear" + str(args.filter_by_year) + "_full" if args.full_env else "" +  ".pt"
 			else:
-				model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_final.pt"
+				model_name = args.stock_env + "_p1" + str(args.period_1) + "_p2" + str(args.period_2) + "_minEL" + str(args.min_episode_length) + "_maxEL" + str(args.max_episode_length) + "_nstep" + str(args.num_steps) + "_ntrainstep" + str(args.num_train_steps) + "_lr" + str(args.lr) + "_gamma" + str(args.gamma) + "_tau" + str(args.tau) + "_full" if args.full_env else "" + "_final.pt"
 			if gpu_id >= 0:
 				with torch.cuda.device(gpu_id):
 					state_to_save = agent.model.state_dict()
@@ -184,9 +190,15 @@ def test_one_episode(args, sdae_model, shared_model, env_config):
 
 	# Initialize environment
 	if(trans_cost_rate is not None and slippage_rate is not None):
-		env = Single_Stock_BS_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate, full_data_episode = True)
+		if(args.full_env):
+			env = Single_Stock_Full_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate, full_data_episode = True)
+		else:
+			env = Single_Stock_BS_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate, full_data_episode = True)
 	else:
-		env = Single_Stock_BS_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, full_data_episode = True)
+		if(args.full_env):
+			env = Single_Stock_Full_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, full_data_episode = True)
+		else:
+			env = Single_Stock_BS_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, full_data_episode = True)
 	state = env.get_current_input_to_model()
 	agent_model = A3C_LSTM(args.rl_input_dim, args.num_actions)
 	agent = Agent(sdae_model, agent_model, args)

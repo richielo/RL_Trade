@@ -127,6 +127,11 @@ parser.add_argument(
     metavar='AM',
     help='Adam optimizer amsgrad parameter')
 parser.add_argument(
+    '--full_env',
+    default=True,
+    metavar='AM',
+    help='Whether to use full environment instead of only buy and sell')
+parser.add_argument(
     '--input_dim',
     type=int,
     default=11,
