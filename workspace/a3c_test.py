@@ -34,7 +34,7 @@ def test(args, sdae_model, shared_model, env_config, train_process_finish_flags)
 	# Initialize environment
 	if(trans_cost_rate is not None and slippage_rate is not None):
 		if(args.full_env):
-		env = Single_Stock_Full_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate, full_data_episode = True)
+			env = Single_Stock_Full_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate, full_data_episode = True)
 		else:
 			env = Single_Stock_BS_Env(stock_raw_data, stock_norm_data, starting_capital, min_episode_length, max_episode_length, max_position, trans_cost_rate, slippage_rate, full_data_episode = True)
 	else:

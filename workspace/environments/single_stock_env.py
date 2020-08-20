@@ -167,10 +167,10 @@ class Single_Stock_Full_Env(Single_Stock_Base_Env):
             position_change = new_position - og_position
             if(og_position > new_position):
                 # Sell
-                self.curr_capital += self.curr_raw_state[6] * abs(position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
+                self.curr_capital = self.curr_capital + self.curr_raw_state[6] * abs(position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
             elif(og_position < new_position):
                 # Long
-                self.curr_capital -= self.curr_raw_state[6] * abs(position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
+                self.curr_capital = self.curr_capital - self.curr_raw_state[6] * abs(position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(position_change)
             else:
                 # Maintain current position
                 pass
@@ -180,27 +180,27 @@ class Single_Stock_Full_Env(Single_Stock_Base_Env):
             short_position_change = abs(new_position)
             if(og_position != 0.0):
                 # Sell
-                self.curr_capital += self.curr_raw_state[6] * abs(sell_position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(sell_position_change)
+                self.curr_capital = self.curr_capital + self.curr_raw_state[6] * abs(sell_position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(sell_position_change)
             #Short
-            self.curr_capital += self.curr_raw_state[6] * abs(short_position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(short_position_change)
+            self.curr_capital = self.curr_capital + self.curr_raw_state[6] * abs(short_position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(short_position_change)
 
         elif(og_position < 0.0 and new_position >= 0.0):
             # Cover
             cover_position_change = abs(og_position)
             long_position_change = new_position
-            self.curr_capital -= self.curr_raw_state[6] * abs(cover_position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(cover_position_change)
+            self.curr_capital = self.curr_capital - self.curr_raw_state[6] * abs(cover_position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(cover_position_change)
             if(new_position != 0.0):
                 # Long
-                self.curr_capital -= self.curr_raw_state[6] * abs(long_position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(long_position_change)
+                self.curr_capital = self.curr_capital - self.curr_raw_state[6] * abs(long_position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(long_position_change)
         elif(og_position < 0.0 and new_position < 0.0):
             if(og_position > new_position):
                 # Short
                 short_position_change = og_position - new_position
-                self.curr_capital += self.curr_raw_state[6] * abs(short_position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(short_position_change)
+                self.curr_capital = self.curr_capital + self.curr_raw_state[6] * abs(short_position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(short_position_change)
             elif(og_position < new_position):
                 # Cover
                 cover_position_change = new_position - og_position
-                self.curr_capital -= self.curr_raw_state[6] * abs(cover_position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(cover_position_change)
+                self.curr_capital = self.curr_capital - self.curr_raw_state[6] * abs(cover_position_change) - (self.trans_cost_rate + self.slippage_rate) * abs(cover_position_change)
             else:
                 # Maintain current position
                 pass
