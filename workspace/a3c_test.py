@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+from collections import Counter
 import torch
 import torch.optim as optim
 from environments.single_stock_env import Single_Stock_BS_Env, Single_Stock_Full_Env
@@ -78,7 +79,7 @@ def test(args, sdae_model, shared_model, env_config, train_process_finish_flags)
 		pv_change_list = []
 		while env.done is False:
 			action, (next_hx, next_cx) = agent.select_action(state, (hx, cx), training = False)
-			#actions.append(action)
+			actions.append(action - 3)
 			reward, next_state, _ = env.step(action)
 			"""
 			rewards.append(reward)
@@ -114,6 +115,7 @@ def test(args, sdae_model, shared_model, env_config, train_process_finish_flags)
 		#print("Test num: " + str(test_num) + " | Test reward: " + str(episodic_reward) + " | Final equity: " + str(port_value))
 		#print(env.curr_holdings)
 		print("Test num: {0} | Test reward: {1} | Holdings: {2} | End Capital: {3} | Final equity : {4}".format(test_num, episodic_reward, env.curr_holdings[0], env.curr_capital, port_value))
+		print(Counter(actions))
 		print("\n")
 		sys.stdout.flush()
 		env.reset()

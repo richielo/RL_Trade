@@ -50,7 +50,7 @@ parser.add_argument(
 parser.add_argument(
     '--num_train_steps',
     type=int,
-    default=5000000,
+    default=10000000,
     metavar='NTS',
     help='Number of training steps per working (default: 25000000)')
 parser.add_argument(
@@ -58,7 +58,7 @@ parser.add_argument(
     type=int,
     default=10,
     metavar='NS',
-    help='number of forward steps in A3C (default: 20)')
+    help='number of forward steps in A3C (default: 10)')
 parser.add_argument(
     '--max_episode_length',
     type=int,
